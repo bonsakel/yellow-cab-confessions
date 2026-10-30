@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     duckdb_memory_limit: str = "6GB"
     duckdb_threads: int = Field(default=4, ge=1)
     work_dir: Path = Path("warehouse")
+    dbt_project_dir: Path = Path("dbt")
 
     @property
     def download_dir(self) -> Path:

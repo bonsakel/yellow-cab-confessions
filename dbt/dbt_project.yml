@@ -23,6 +23,13 @@ vars:
   teleporting_speed_mph: 80.0
   max_passenger_count: 8
   unknown_zone_ids: [264, 265]
+  weather_dry_threshold_mm: 0.1
+  weather_light_rain_upper_mm: 2.5
+  weather_moderate_rain_upper_mm: 7.6
+
+seeds:
+  yellow_cab_confessions:
+    +schema: raw
 
 models:
   yellow_cab_confessions:

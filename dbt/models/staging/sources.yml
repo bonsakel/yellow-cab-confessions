@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: raw
     schema: raw
-    description: Raw TLC trip records and pipeline ingestion metadata.
+    description: Raw TLC trip records, enrichment extracts, and pipeline metadata.
     tables:
       - name: yellow_trips_raw
         description: One raw TLC yellow taxi row with its original source filename.
@@ -21,3 +21,45 @@ sources:
             description: TLC published zone name.
           - name: service_zone
             description: TLC published service-zone category.
+      - name: weather_hourly
+        description: >
+          Open-Meteo hourly weather converted from UTC to naive America/New_York
+          wall-clock hours. Duplicate fall-back wall-clock hours are aggregated
+          to one row; precipitation and snowfall retain the maximum observation.
+          The nonexistent spring-forward wall-clock hour is included with null
+          measures to preserve full calendar-hour coverage.
+        columns:
+          - name: local_hour
+            description: Unique naive NYC local-hour key.
+          - name: temperature_2m
+            description: Mean temperature in degrees Celsius across duplicate wall hours.
+          - name: precipitation
+            description: Maximum precipitation depth in millimeters across duplicate wall hours.
+          - name: rain
+            description: Maximum rain depth in millimeters across duplicate wall hours.
+          - name: snowfall
+            description: Maximum snowfall in centimeters across duplicate wall hours.
+          - name: wind_speed_10m
+            description: Mean wind speed in kilometers per hour across duplicate wall hours.
+          - name: weather_code
+            description: Open-Meteo weather interpretation code.
+      - name: zone_centroids
+        description: WGS84 zone centroids calculated from reprojected TLC zone polygons.
+        columns:
+          - name: zone_id
+            description: TLC taxi zone identifier.
+          - name: centroid_lat
+            description: WGS84 centroid latitude.
+          - name: centroid_lon
+            description: WGS84 centroid longitude.
+      - name: ingestion_manifest
+        description: One row per extracted TLC source file and its latest load state.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 24, period: hour}
+          error_after: {count: 168, period: hour}
+        columns:
+          - name: source_file
+            description: Source file name used as the manifest key.
+          - name: loaded_at
+            description: Timestamp when the source file was last loaded to DuckDB.

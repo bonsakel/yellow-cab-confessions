@@ -31,6 +31,7 @@ select
         when 4 then 'Nassau or Westchester'
         when 5 then 'Negotiated fare'
         when 6 then 'Group ride'
+        when 99 then 'Unknown rate code'
         else 'Unmapped rate code'
     end as rate_code_label
 from payment_codes

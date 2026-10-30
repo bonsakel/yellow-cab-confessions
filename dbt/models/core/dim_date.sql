@@ -19,5 +19,7 @@ select
     extract(quarter from date_day)::integer as quarter_number,
     extract(year from date_day)::integer as year_number,
     extract(dow from date_day) in (0, 6) as is_weekend,
-    cast(null as varchar) as holiday_name
+    holidays.holiday_name
 from calendar
+left join {{ ref("stg_holidays") }} as holidays
+    on calendar.date_day = holidays.holiday_date

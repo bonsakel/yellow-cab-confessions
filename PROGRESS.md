@@ -164,3 +164,73 @@ checks passed before Phase 4 began.
   demonstrated by this input. No fixture rows were added because Phase 3 is
   being validated against the loaded demo month; CI fixtures are specified in
   a later phase.
+
+## Phase 4: Enrichment, tests, and freshness
+
+**Status:** Complete. Enrichment, dbt test, source freshness, and docs
+acceptance checks passed before Phase 5 began.
+
+### Delivered
+
+- Added retrying Open-Meteo archive extraction for the configured year, caching
+  the original JSON and normalized compressed parquet in the work directory
+  and MinIO. The DuckDB loader replaces `raw.weather_hourly` after validating
+  its expected unique local-hour coverage.
+- Converted UTC weather timestamps to naive `America/New_York` local time.
+  The repeated fall-back hour is represented once: mean temperature and wind,
+  maximum precipitation/rain/snowfall, and the first weather code. The
+  nonexistent spring-forward wall hour is included with null weather values
+  so the dimension retains exactly 24 rows per calendar day.
+- Added weather staging and precipitation/snowfall buckets. Thresholds for
+  dry, light rain, and moderate rain live in dbt vars.
+- Added US/New York holiday seed generation using `holidays` and joined those
+  labels to `dim_date`.
+- Added the TLC zone-shape pipeline: reprojected source CRS to WGS84, simplified
+  polygons to GeoJSON, generated centroid parquet, uploaded the archive and
+  centroids, and loaded `raw.zone_centroids` for `dim_zone`.
+- Added dbt source freshness for `raw.ingestion_manifest`, accepted-value
+  checks, local-hour coverage and quarantine-code tests, and a dbt unit test
+  exercising all 11 quarantine rule codes.
+- Added mocked network retry/cache tests, DST aggregation tests, weather loader
+  coverage tests, and holiday-seed tests. Updated Open-Meteo attribution and
+  terms in `NOTICE.md`.
+
+### Verification
+
+- `python -m ycc extract-weather` fetched the actual 2024 archive once and
+  produced **8,784** local-hour records; the raw JSON is **401,621 bytes** and
+  the compressed parquet is **67,109 bytes**. `load-weather` loaded all 8,784
+  hours into DuckDB.
+- The weather buckets contain **7,474 dry**, **1,048 light-rain**,
+  **116 moderate-rain**, **25 heavy-rain**, **120 snow**, and **1 unknown**
+  hour. The unknown hour is the spring-forward wall-clock hour with no actual
+  observation.
+- `extract-zone-shapes` produced **263** valid GeoJSON features and centroids;
+  verified polygon bounds are NYC WGS84 coordinates (longitude -74.256 to
+  -73.700; latitude 40.496 to 40.916). The 2024 holiday seed contains **14**
+  rows.
+- `dbt build --no-partial-parse`: **56/56 passed** (10 models, one seed, 44
+  data tests, and one unit test; no warnings or skips).
+- `dbt test`: **45/45 passed**. `dbt source freshness`: manifest freshness
+  passed. `dbt docs generate`: passed and wrote `target/catalog.json`; all 10
+  models have descriptions and no model columns are undocumented.
+- Raw-to-clean reconciliation remains **2,964,624 = 2,884,524 + 80,100**.
+  The enriched dimensions contain 366 dates, 8,784 local weather hours, 266
+  zones, and 27 payment/rate-code pairs.
+- `.venv/bin/ruff check .`, `.venv/bin/ruff format --check .`, and
+  `.venv/bin/python -m pytest -q`: passed; **14 tests**.
+- `docker compose config --quiet` passed; Airflow API, scheduler, DAG
+  processor, MinIO, and Postgres report healthy.
+- Reviewed Open-Meteo's current terms and licence: free API use is limited to
+  non-commercial purposes and the data is CC BY 4.0 with required attribution.
+
+### Deviations
+
+- PyArrow was initially considered for parquet writes, but the Airflow Python
+  3.14 constraints pin a PyArrow release without a compatible wheel. The
+  pipeline instead writes the small normalized weather and centroid parquet
+  files with the already-pinned DuckDB engine, avoiding an Airflow dependency
+  conflict.
+- The UTC Open-Meteo request includes two adjacent UTC calendar days to ensure
+  the full local NYC year is covered at both year boundaries; local-hour
+  conversion filters back to the configured year.

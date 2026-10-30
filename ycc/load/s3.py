@@ -21,6 +21,7 @@ class ObjectStorage(Protocol):
         *,
         sha256: str,
         source_etag: str | None,
+        content_type: str = "application/vnd.apache.parquet",
     ) -> None:
         """Upload a checksummed source object."""
         ...
@@ -79,8 +80,9 @@ class S3ObjectStore:
         *,
         sha256: str,
         source_etag: str | None,
+        content_type: str = "application/vnd.apache.parquet",
     ) -> None:
-        """Upload a file with checksum metadata and ensure the bucket exists."""
+        """Upload a checksummed file with its media type and ensure the bucket exists."""
         self.ensure_bucket()
         metadata = {"sha256": sha256}
         if source_etag:
@@ -90,7 +92,7 @@ class S3ObjectStore:
             self.bucket,
             key,
             ExtraArgs={
-                "ContentType": "application/vnd.apache.parquet",
+                "ContentType": content_type,
                 "Metadata": metadata,
             },
         )

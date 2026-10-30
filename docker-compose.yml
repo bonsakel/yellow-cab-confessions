@@ -87,6 +87,7 @@ services:
       YCC_DUCKDB_PATH: ${YCC_DUCKDB_PATH:-/data/warehouse/ycc.duckdb}
       YCC_DUCKDB_MEMORY_LIMIT: ${YCC_DUCKDB_MEMORY_LIMIT:-6GB}
       YCC_DUCKDB_THREADS: ${YCC_DUCKDB_THREADS:-4}
+      YCC_DBT_PROJECT_DIR: /opt/airflow/dbt
       YCC_WORK_DIR: /data/work
     volumes:
       - ./airflow/dags:/opt/airflow/dags

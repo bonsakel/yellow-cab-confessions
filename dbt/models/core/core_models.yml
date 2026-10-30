@@ -22,7 +22,7 @@ models:
       - name: is_unknown_zone
         description: True for zone IDs 264, 265, and the missing-ID sentinel.
   - name: dim_date
-    description: One row per date in the configured analysis year.
+    description: One row per date in the configured analysis year, enriched with US and NY holidays.
     columns:
       - name: date_key
         description: Integer YYYYMMDD date key.
@@ -51,11 +51,14 @@ models:
       - name: is_weekend
         description: True for Saturday and Sunday.
       - name: holiday_name
-        description: Holiday label, populated during holiday enrichment.
+        description: US or New York holiday name when the date is a holiday.
   - name: dim_weather
     description: >
-      One row per naive local NYC hour in the configured year. Weather measures
-      remain null and bucket unknown until the enrichment phase loads Open-Meteo.
+      One row per naive local NYC hour in the configured year, enriched with
+      Open-Meteo Central Park weather. The duplicated fall-back hour is
+      aggregated to one wall-clock row; precipitation and snowfall use the
+      maximum observation, while temperature and wind use their mean. The
+      nonexistent spring-forward hour has null weather values.
     columns:
       - name: local_hour
         description: Unique naive NYC local-hour key; DST fall-back is represented once per wall-clock hour.
@@ -75,7 +78,15 @@ models:
       - name: weather_code
         description: Open-Meteo weather interpretation code.
       - name: weather_bucket
-        description: Weather category; unknown until weather enrichment is loaded.
+        description: >
+          Category from hourly precipitation and snowfall: dry below 0.1 mm,
+          light_rain from 0.1 to 2.5 mm, moderate_rain from 2.5 to 7.6 mm,
+          heavy_rain above 7.6 mm, snow when snowfall is positive, or unknown
+          when weather is missing. Configured thresholds are dbt vars.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["dry", "light_rain", "moderate_rain", "heavy_rain", "snow", "unknown"]
   - name: dim_payment
     description: Payment-type and TLC rate-code labels observed in raw trips.
     columns:
@@ -86,10 +97,18 @@ models:
           - not_null
       - name: payment_type
         description: Numeric TLC payment-type code.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1, 2, 3, 4, 5, 6]
       - name: payment_type_label
         description: Readable TLC payment-type label.
       - name: rate_code_id
         description: Numeric TLC rate-code ID.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5, 6, 99]
       - name: rate_code_label
         description: Readable TLC rate-code label.
   - name: fct_trips

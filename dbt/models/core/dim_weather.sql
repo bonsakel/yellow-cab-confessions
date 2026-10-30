@@ -12,12 +12,23 @@ hours as (
         range(0, date_diff('hour', year_start, year_end)) as generated(hour_offset)
 )
 select
-    local_hour,
-    cast(null as double) as temperature_2m,
-    cast(null as double) as precipitation,
-    cast(null as double) as rain,
-    cast(null as double) as snowfall,
-    cast(null as double) as wind_speed_10m,
-    cast(null as integer) as weather_code,
-    'unknown'::varchar as weather_bucket
+    hours.local_hour,
+    weather.temperature_2m,
+    weather.precipitation,
+    weather.rain,
+    weather.snowfall,
+    weather.wind_speed_10m,
+    weather.weather_code,
+    case
+        when weather.local_hour is null then 'unknown'
+        when weather.snowfall > 0 then 'snow'
+        when weather.precipitation is null then 'unknown'
+        when weather.precipitation < {{ var("weather_dry_threshold_mm") }} then 'dry'
+        when weather.precipitation < {{ var("weather_light_rain_upper_mm") }} then 'light_rain'
+        when weather.precipitation <= {{ var("weather_moderate_rain_upper_mm") }}
+            then 'moderate_rain'
+        else 'heavy_rain'
+    end as weather_bucket
 from hours
+left join {{ ref("stg_weather_hourly") }} as weather
+    on hours.local_hour = weather.local_hour
