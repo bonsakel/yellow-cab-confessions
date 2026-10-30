@@ -1,9 +1,10 @@
-"""Export dbt mart tables as small, compressed app-facing parquet files."""
+"""Export app-facing parquet marts and the zone map within the size budget."""
 
 import json
 import logging
 import math
 import os
+import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -120,7 +121,7 @@ def _confessions(connection: duckdb.DuckDBPyConnection, year: int) -> dict[str, 
 
 
 def export_marts(settings: Settings) -> ExportSummary:
-    """Export all required dbt marts, derived confessions, and enforce the byte budget."""
+    """Export app datasets and enforce the budget across all retained app data."""
     if not settings.duckdb_path.is_file():
         raise FileNotFoundError(f"DuckDB warehouse not found at {settings.duckdb_path}.")
     destination = settings.app_data_dir
@@ -144,6 +145,13 @@ def export_marts(settings: Settings) -> ExportSummary:
                     f"COPY (SELECT * FROM marts.{mart}) TO ? (FORMAT PARQUET, COMPRESSION ZSTD)",
                     [str(target)],
                 )
+            zones_geojson = settings.work_dir / "zones.geojson"
+            if not zones_geojson.is_file():
+                raise FileNotFoundError(
+                    f"Zone GeoJSON not found at {zones_geojson}; "
+                    "run the zone-shape extraction before exporting."
+                )
+            shutil.copyfile(zones_geojson, staging_dir / "zones.geojson")
             confessions_path = staging_dir / "confessions.json"
             confessions_path.write_text(
                 json.dumps(confessions, indent=2, sort_keys=True, allow_nan=False) + "\n",
@@ -152,6 +160,14 @@ def export_marts(settings: Settings) -> ExportSummary:
 
             sizes = {path.name: path.stat().st_size for path in staging_dir.iterdir()}
             total_bytes = sum(sizes.values())
+            retained_bytes = sum(
+                path.stat().st_size
+                for path in destination.rglob("*")
+                if path.is_file()
+                and staging_dir not in path.parents
+                and (path.parent != destination or path.name not in sizes)
+            )
+            total_bytes += retained_bytes
             budget_bytes = settings.export_size_budget_mb * 1024 * 1024
             if total_bytes > budget_bytes:
                 raise ValueError(
@@ -167,9 +183,10 @@ def export_marts(settings: Settings) -> ExportSummary:
     logger.info(
         "marts.export.completed",
         extra={
-            "file_count": len(MARTS) + 1,
+            "file_count": len(MARTS) + 2,
             "total_bytes": total_bytes,
             "budget_bytes": budget_bytes,
+            "retained_bytes": retained_bytes,
             "files": sizes,
         },
     )

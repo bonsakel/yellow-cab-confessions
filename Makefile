@@ -1,9 +1,10 @@
-.PHONY: setup demo demo-lite full dbt-build export test lint clean
+.PHONY: setup demo demo-lite full dbt-build export app test lint clean
 
 setup:
 	test -f .env || cp .env.example .env
 	test -x .venv/bin/python || python3 -m venv .venv
 	.venv/bin/python -m pip install -e ".[dev]"
+	.venv/bin/python -m pip install -r app/requirements.txt
 
 demo:
 	docker compose up --build
@@ -16,6 +17,9 @@ dbt-build:
 
 export: dbt-build
 	docker compose exec -T airflow-scheduler python -m ycc export
+
+app:
+	.venv/bin/streamlit run app/Home.py
 
 full:
 	@echo "Full-year processing is added in a later build phase."

@@ -44,6 +44,8 @@ models:
         description: Total clean credit-card trips in the group.
       - name: credit_card_tip_trips
         description: Credit-card trips with a calculable tip percentage.
+      - name: speed_trips
+        description: Trips with a calculable average speed.
       - name: avg_fare
         description: Mean metered fare in US dollars.
       - name: avg_tip_pct

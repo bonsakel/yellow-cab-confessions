@@ -1,32 +1,32 @@
 {
   "analysis_year": 2024,
   "clean_trips": 2884524,
-  "credit_card_tips_usd": 9563405.8399987,
+  "credit_card_tips_usd": 9563405.839999132,
   "quarantined_trips": 80100,
   "rain_vs_dry_demand_pct": 3.571757529286912,
-  "rain_vs_dry_tip_pct_change": 5.022832818644329,
+  "rain_vs_dry_tip_pct_change": 5.022832818644352,
   "tip_percentage_note": "Tip percentages use credit-card trips only; cash tips are not reported.",
-  "total_miles": 9437923.060000323,
+  "total_miles": 9437923.060000082,
   "unknown_zone_trips": 28770,
   "weather_bucket_stats": {
     "dry": {
-      "average_credit_card_tip_pct": 28.780520585606382,
+      "average_credit_card_tip_pct": 28.780520585606368,
       "average_daily_trips": 704.81783070486
     },
     "heavy_rain": {
-      "average_credit_card_tip_pct": 26.406388579695072,
+      "average_credit_card_tip_pct": 26.40638857969507,
       "average_daily_trips": 174.2
     },
     "light_rain": {
-      "average_credit_card_tip_pct": 30.208608285289934,
+      "average_credit_card_tip_pct": 30.20860828528993,
       "average_daily_trips": 678.0033840947547
     },
     "moderate_rain": {
-      "average_credit_card_tip_pct": 30.645799128675606,
+      "average_credit_card_tip_pct": 30.645799128675566,
       "average_daily_trips": 701.8813559322034
     },
     "snow": {
-      "average_credit_card_tip_pct": 26.368859735718765,
+      "average_credit_card_tip_pct": 26.36885973571875,
       "average_daily_trips": 752.8042168674699
     }
   }

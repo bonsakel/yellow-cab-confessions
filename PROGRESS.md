@@ -294,3 +294,47 @@ checks passed before Phase 6 began.
 - Rain-vs-dry headline comparisons use observed-day and valid credit-card-tip
   weights instead of giving each weather category equal weight. This avoids
   category frequency and null tip ratios distorting the data-derived headline.
+
+## Phase 6: Streamlit app
+
+**Status:** Complete. The app smoke tests, page navigation, interactive
+playback, and refreshed data exports passed before Phase 7 began.
+
+### Delivered
+
+- Added the Home page, five feature pages, and About / Under the Hood, with a
+  shared header/footer, dark taxi-yellow theme, cached parquet/GeoJSON readers,
+  and responsive charts and maps. All pages read bundled files from `app/data`
+  rather than opening the warehouse.
+- Added pinned lightweight app dependencies and wired them into `make setup`;
+  added `make app` and headless Streamlit `AppTest` coverage for all seven
+  entry points and the Night City playback toggle.
+- Updated the exporter to include zone polygons in the app bundle and to
+  enforce the size limit across newly staged outputs and retained app assets.
+  Refreshed all seven mart files, `confessions.json`, and `zones.geojson`.
+- Captured and refreshed browser screenshots for Home, all five feature pages,
+  and About under `docs/images/phase6-*.png`.
+
+### Verification
+
+- `.venv/bin/ruff check .`, `.venv/bin/ruff format --check .`,
+  `.venv/bin/python -m pytest -q` (**26 passed**), `.venv/bin/python -m pip
+  check`, `docker compose config --quiet`, and `git diff --check`: passed.
+- Rebuilt the Airflow scheduler image and ran `make export`: dbt passed
+  **93/93** with zero warnings or errors. The exporter wrote nine app assets
+  totaling **1,088,970 bytes**, well under the 52,428,800-byte budget; the
+  largest file is the 605,491-byte zone GeoJSON.
+- Navigated through all seven app pages in the browser; each loaded and the
+  browser reported no console errors. Night City playback changed the selected
+  ten-minute bin from 18:00 to 18:30 while showing the pause control.
+- Captured seven refreshed screenshots. The app reports the exact demo-month
+  reconciliation, **2,964,624 = 2,884,524 + 80,100**.
+
+### Deviations
+
+- About reports that no pipeline-run history has been published until the
+  Phase 7 Airflow workflow writes `pipeline_runs.parquet`; it does not fabricate
+  run history.
+- Night City labels the count for the selected ten-minute pickup window rather
+  than implying live rides in progress; the pipeline is historical and has no
+  real-time data source.
