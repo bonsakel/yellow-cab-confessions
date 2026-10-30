@@ -21,6 +21,7 @@ app/data/*
 !app/data/.gitkeep
 !app/data/confessions.json
 !app/data/mart_*.parquet
+!app/data/pipeline_runs.parquet
 !app/data/zones.geojson
 dbt/target/
 dbt/logs/

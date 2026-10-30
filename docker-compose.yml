@@ -73,7 +73,7 @@ services:
     environment: &airflow-environment
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
       AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-api-server:8080/execution/
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres:5432/${POSTGRES_DB:-airflow}
       AIRFLOW_UID: ${AIRFLOW_UID:-50000}
@@ -85,8 +85,8 @@ services:
       YCC_S3_SECRET_KEY: ${YCC_S3_SECRET_KEY:-minioadmin}
       YCC_S3_REGION: ${YCC_S3_REGION:-us-east-1}
       YCC_DUCKDB_PATH: ${YCC_DUCKDB_PATH:-/data/warehouse/ycc.duckdb}
-      YCC_DUCKDB_MEMORY_LIMIT: ${YCC_DUCKDB_MEMORY_LIMIT:-6GB}
-      YCC_DUCKDB_THREADS: ${YCC_DUCKDB_THREADS:-4}
+      YCC_DUCKDB_MEMORY_LIMIT: ${YCC_DUCKDB_MEMORY_LIMIT:-4GB}
+      YCC_DUCKDB_THREADS: ${YCC_DUCKDB_THREADS:-2}
       YCC_DBT_PROJECT_DIR: /opt/airflow/dbt
       YCC_APP_DATA_DIR: /opt/airflow/app/data
       YCC_EXPORT_SIZE_BUDGET_MB: ${YCC_EXPORT_SIZE_BUDGET_MB:-50}
@@ -186,6 +186,61 @@ services:
       timeout: 10s
       retries: 12
       start_period: 30s
+
+  airflow-demo-init:
+    build:
+      context: .
+      dockerfile: airflow/Dockerfile
+    command:
+      - bash
+      - -ec
+      - |
+        airflow dags unpause yellow_cab_confessions --yes
+        run_id="compose_demo__$$(date -u +%Y%m%dT%H%M%S)"
+        conf="$$(python -c 'import json, os; print(json.dumps({"months": [month.strip() for month in os.environ["YCC_DEMO_MONTHS"].split(",") if month.strip()]}))')"
+        airflow dags trigger yellow_cab_confessions --run-id "$$run_id" --conf "$$conf"
+    environment: *airflow-environment
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./dbt:/opt/airflow/dbt
+      - ./app:/opt/airflow/app
+      - airflow_logs:/opt/airflow/logs
+      - airflow_secrets:/run/airflow-secrets:ro
+      - ycc_data:/data
+    depends_on:
+      minio:
+        condition: service_healthy
+      airflow-api-server:
+        condition: service_healthy
+      airflow-scheduler:
+        condition: service_healthy
+      airflow-dag-processor:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./app/data:/app/data:ro
+    depends_on:
+      airflow-demo-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=3).read()",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
 volumes:
   minio_data:

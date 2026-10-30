@@ -24,8 +24,8 @@ class Settings(BaseSettings):
     s3_secret_key: str = "minioadmin"
     s3_region: str = "us-east-1"
     duckdb_path: Path = Path("warehouse/ycc.duckdb")
-    duckdb_memory_limit: str = "6GB"
-    duckdb_threads: int = Field(default=4, ge=1)
+    duckdb_memory_limit: str = "4GB"
+    duckdb_threads: int = Field(default=2, ge=1)
     work_dir: Path = Path("warehouse")
     dbt_project_dir: Path = Path("dbt")
     app_data_dir: Path = Path("app/data")
