@@ -1,4 +1,4 @@
-.PHONY: setup demo demo-lite full test lint clean
+.PHONY: setup demo demo-lite full dbt-build export test lint clean
 
 setup:
 	test -f .env || cp .env.example .env
@@ -10,6 +10,12 @@ demo:
 
 demo-lite:
 	@echo "The local pipeline is added in a later build phase."
+
+dbt-build:
+	docker compose exec -T airflow-scheduler /usr/local/bin/dbt build --project-dir /opt/airflow/dbt --profiles-dir /opt/airflow/dbt
+
+export: dbt-build
+	docker compose exec -T airflow-scheduler python -m ycc export
 
 full:
 	@echo "Full-year processing is added in a later build phase."

@@ -21,11 +21,13 @@ vars:
   absurd_duration_minutes: 360
   absurd_distance_miles: 100.0
   teleporting_speed_mph: 80.0
+  airport_min_duration_minutes: 1.0
   max_passenger_count: 8
   unknown_zone_ids: [264, 265]
   weather_dry_threshold_mm: 0.1
   weather_light_rain_upper_mm: 2.5
   weather_moderate_rain_upper_mm: 7.6
+  blooper_examples_per_rule: 200
 
 seeds:
   yellow_cab_confessions:
@@ -44,4 +46,7 @@ models:
       +materialized: table
     core:
       +schema: core
+      +materialized: table
+    marts:
+      +schema: marts
       +materialized: table

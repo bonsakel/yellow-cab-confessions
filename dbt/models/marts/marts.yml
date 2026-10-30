@@ -1,0 +1,276 @@
+version: 2
+
+seeds:
+  - name: featured_nights
+    description: Default featured NYC nights shown by the Night City mart.
+    columns:
+      - name: night_date
+        description: Local NYC date on which the featured evening begins.
+        data_tests:
+          - unique
+          - not_null
+      - name: night_name
+        description: Human-readable featured-night label.
+        data_tests:
+          - not_null
+
+models:
+  - name: mart_rain_tax
+    description: >
+      Weather bucket, local pickup hour, and pickup borough summaries with
+      trip counts, mean measures, and a dry-day baseline for the same hour and
+      borough. Demand comparisons use average trips per observed date.
+    columns:
+      - name: weather_bucket
+        description: Rain, snow, dry, or unknown category from dim_weather.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["dry", "light_rain", "moderate_rain", "heavy_rain", "snow", "unknown"]
+      - name: hour_of_day
+        description: Local NYC pickup hour from 0 through 23.
+        data_tests:
+          - not_null
+      - name: pickup_borough
+        description: Pickup borough from the TLC zone lookup.
+        data_tests:
+          - not_null
+      - name: trips
+        description: Number of clean trips in the weather bucket and group.
+      - name: observed_days
+        description: Number of dates with trips in this group.
+      - name: credit_card_trips
+        description: Total clean credit-card trips in the group.
+      - name: credit_card_tip_trips
+        description: Credit-card trips with a calculable tip percentage.
+      - name: avg_fare
+        description: Mean metered fare in US dollars.
+      - name: avg_tip_pct
+        description: Mean tip percentage for credit-card trips only.
+      - name: avg_speed_mph
+        description: Mean average trip speed in miles per hour.
+      - name: avg_trips_per_day
+        description: Mean trips per observed date for this weather bucket and group.
+      - name: dry_avg_trips_per_day
+        description: Mean dry-weather trips per date for the same hour and borough.
+      - name: demand_vs_dry_pct
+        description: Percent change in average daily trips relative to the dry baseline.
+  - name: mart_airport_runs
+    description: >
+      Historical airport trip fare and duration percentiles by direction, day
+      type, hour, and other-end borough. Trips under one minute are excluded
+      from estimates because they are not plausible airport journeys.
+    columns:
+      - name: airport
+        description: Airport code; JFK, LGA, or EWR.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["JFK", "LGA", "EWR"]
+      - name: direction
+        description: Whether the trip travels to or from the airport.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["to_airport", "from_airport"]
+      - name: day_type
+        description: Holiday, weekend, or weekday using the local pickup date.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["weekday", "weekend", "holiday"]
+      - name: hour_of_day
+        description: Local NYC pickup hour from 0 through 23.
+      - name: other_end_borough
+        description: Borough at the trip endpoint opposite the airport.
+      - name: trips
+        description: Number of clean airport trips in this group.
+      - name: duration_p10_min
+        description: Tenth percentile trip duration in minutes.
+      - name: duration_p50_min
+        description: Median trip duration in minutes.
+      - name: duration_p90_min
+        description: Ninetieth percentile trip duration in minutes.
+      - name: fare_p10
+        description: Tenth percentile metered fare in US dollars.
+      - name: fare_p50
+        description: Median metered fare in US dollars.
+      - name: fare_p90
+        description: Ninetieth percentile metered fare in US dollars.
+  - name: mart_zone_pairs
+    description: Directional zone-to-zone flows with at least 30 clean trips and average trip measures.
+    columns:
+      - name: pickup_zone_id
+        description: TLC pickup-zone identifier.
+        data_tests:
+          - not_null
+      - name: pickup_zone
+        description: Pickup zone name.
+      - name: pickup_borough
+        description: Pickup borough.
+      - name: dropoff_zone_id
+        description: TLC drop-off zone identifier.
+        data_tests:
+          - not_null
+      - name: dropoff_zone
+        description: Drop-off zone name.
+      - name: dropoff_borough
+        description: Drop-off borough.
+      - name: trips
+        description: Number of clean trips in the directional zone pair; at least 30.
+      - name: avg_fare
+        description: Mean metered fare in US dollars.
+      - name: avg_duration_min
+        description: Mean trip duration in minutes.
+      - name: avg_speed_mph
+        description: Mean average trip speed in miles per hour.
+      - name: avg_tip_pct
+        description: Mean tip percentage for credit-card trips only.
+  - name: mart_zone_summary
+    description: Zone-level pickup and drop-off volumes, trip measures, and WGS84 centroids.
+    columns:
+      - name: zone_id
+        description: TLC taxi zone identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: zone_name
+        description: TLC zone name.
+      - name: borough
+        description: TLC borough.
+      - name: centroid_lat
+        description: WGS84 zone centroid latitude.
+      - name: centroid_lon
+        description: WGS84 zone centroid longitude.
+      - name: endpoint_trips
+        description: Total appearances as a pickup or drop-off endpoint.
+      - name: pickup_trips
+        description: Number of clean trips originating in this zone.
+      - name: dropoff_trips
+        description: Number of clean trips ending in this zone.
+      - name: avg_fare
+        description: Mean fare for trips with this zone as either endpoint.
+      - name: avg_speed_mph
+        description: Mean trip speed for trips with this zone as either endpoint.
+      - name: avg_tip_pct
+        description: Mean tip percentage for credit-card trips with this zone as either endpoint.
+  - name: mart_blooper_counts
+    description: Rejected trip counts by rule code and TLC source month; multi-rule trips count once per reason.
+    columns:
+      - name: reason_code
+        description: One of the documented quarantine rule codes.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - NEGATIVE_FARE
+                  - DROPOFF_BEFORE_PICKUP
+                  - ZERO_DURATION
+                  - ABSURD_DURATION
+                  - ZERO_DISTANCE_PAID
+                  - ABSURD_DISTANCE
+                  - TELEPORTING_CAB
+                  - OUT_OF_RANGE_DATE
+                  - BAD_PASSENGER_COUNT
+                  - UNKNOWN_ZONE
+                  - DUPLICATE_TRIP
+      - name: source_month
+        description: YYYY-MM parsed from the source TLC filename.
+        data_tests:
+          - not_null
+      - name: rejected_trips
+        description: Number of trip-reason occurrences for this code and month.
+  - name: mart_blooper_examples
+    description: Up to the configured top 200 most extreme examples for each quarantine rule.
+    columns:
+      - name: trip_id
+        description: Deterministic trip identifier.
+        data_tests:
+          - not_null
+      - name: source_file
+        description: Original source TLC file.
+      - name: source_month
+        description: YYYY-MM parsed from the source TLC filename.
+      - name: reason_code
+        description: Quarantine rule explaining why this example was selected.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - NEGATIVE_FARE
+                  - DROPOFF_BEFORE_PICKUP
+                  - ZERO_DURATION
+                  - ABSURD_DURATION
+                  - ZERO_DISTANCE_PAID
+                  - ABSURD_DISTANCE
+                  - TELEPORTING_CAB
+                  - OUT_OF_RANGE_DATE
+                  - BAD_PASSENGER_COUNT
+                  - UNKNOWN_ZONE
+                  - DUPLICATE_TRIP
+      - name: pickup_datetime
+        description: Naive local NYC pickup timestamp.
+      - name: dropoff_datetime
+        description: Naive local NYC drop-off timestamp.
+      - name: pickup_location_id
+        description: TLC pickup-zone identifier.
+      - name: dropoff_location_id
+        description: TLC drop-off-zone identifier.
+      - name: passenger_count
+        description: Reported passenger count.
+      - name: trip_distance
+        description: Reported trip distance in miles.
+      - name: fare_amount
+        description: Reported fare amount in US dollars.
+      - name: total_amount
+        description: Reported trip total in US dollars.
+      - name: trip_duration_min
+        description: Computed trip duration in minutes.
+      - name: avg_speed_mph
+        description: Computed average speed in miles per hour.
+      - name: reject_reasons
+        description: Array of all applicable quarantine rule codes.
+      - name: weirdness_score
+        description: Rule-specific numeric severity used to rank gallery examples.
+      - name: example_rank
+        description: Deterministic rank within a quarantine reason code.
+  - name: mart_night_city
+    description: >
+      Featured-night trip flows binned to ten-minute local pickup intervals and
+      joined to WGS84 zone centroids. Includes three configured nights and the
+      rainiest 18:00-05:59 weather window selected from dim_weather.
+    columns:
+      - name: night_name
+        description: Configured featured-night label or rainiest-night label.
+        data_tests:
+          - not_null
+      - name: night_date
+        description: Local date on which the featured evening begins.
+        data_tests:
+          - not_null
+      - name: time_bin
+        description: Local pickup timestamp rounded down to a ten-minute bin.
+        data_tests:
+          - not_null
+      - name: pickup_zone_id
+        description: TLC pickup-zone identifier.
+      - name: pickup_zone
+        description: Pickup zone name.
+      - name: pickup_lat
+        description: WGS84 pickup-zone centroid latitude.
+      - name: pickup_lon
+        description: WGS84 pickup-zone centroid longitude.
+      - name: dropoff_zone_id
+        description: TLC drop-off zone identifier.
+      - name: dropoff_zone
+        description: Drop-off zone name.
+      - name: dropoff_lat
+        description: WGS84 drop-off-zone centroid latitude.
+      - name: dropoff_lon
+        description: WGS84 drop-off-zone centroid longitude.
+      - name: trips
+        description: Number of trips in the directional flow and ten-minute bin.

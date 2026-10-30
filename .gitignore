@@ -19,6 +19,8 @@ logs/
 *.duckdb.wal
 app/data/*
 !app/data/.gitkeep
+!app/data/confessions.json
+!app/data/mart_*.parquet
 dbt/target/
 dbt/logs/
 dbt/.user.yml

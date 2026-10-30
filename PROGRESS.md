@@ -234,3 +234,63 @@ acceptance checks passed before Phase 5 began.
 - The UTC Open-Meteo request includes two adjacent UTC calendar days to ensure
   the full local NYC year is covered at both year boundaries; local-hour
   conversion filters back to the configured year.
+
+## Phase 5: Marts and export
+
+**Status:** Complete. The mart build, tests, export, size budget, and sanity
+checks passed before Phase 6 began.
+
+### Delivered
+
+- Added the rain-tax, airport-run, zone-pair, zone-summary, blooper-count,
+  blooper-example, and featured-night flow marts, with model and column
+  descriptions plus singular tests for percentile ordering, airport duration,
+  minimum zone-pair volume, and per-rule example limits.
+- Added the New Year's Eve, July 4th, and Halloween featured-night seed. The
+  rainiest night is selected from the weather dimension at build time.
+- Added a DuckDB-backed exporter that stages ZSTD-compressed parquet files and
+  data-derived `confessions.json`, checks the configured byte budget before
+  replacing existing files, and logs per-file sizes.
+- Added `ycc export`, `make dbt-build`, and `make export`, with environment
+  settings and Compose mounts for app output. Whitelisted the small app export
+  files in `.gitignore` so they can be committed as the app's bundled data.
+- Retained `source_month` in the quarantine model so the blooper counts can be
+  grouped by source month.
+
+### Verification
+
+- `make export`: passed end to end using the real January 2024 TLC load and
+  current DuckDB/dbt containers. The dbt build passed **93/93** items
+  (13 table models, four views, two seeds, 73 data tests, and one unit test).
+- Exported all seven mart parquet files plus `confessions.json`: **482,548
+  bytes** total against the 52,428,800-byte (50 MiB) limit. Every file is below
+  25 MiB, and the exports are small enough to commit.
+- Data-based confessions from the January demo load report 2,884,524 clean
+  trips, 80,100 quarantined trips, 9,437,923.06 miles, and 9,563,405.84 USD in
+  credit-card tips. The weighted rain-vs-dry comparison is +3.57% demand and
+  +5.02% average credit-card tip percentage; cash tips remain unobserved.
+- The raw-to-clean reconciliation remains exact:
+  **2,964,624 = 2,884,524 + 80,100**.
+- Mart row counts: 553 rain-tax groups, 1,651 airport groups, 4,610 zone pairs,
+  262 zones, nine rule/month blooper groups, 1,134 blooper examples, and
+  21,499 featured-night flows. The configured July, Halloween, and New Year's
+  Eve nights have no trip rows in the January-only demo; the dynamically
+  selected rainiest night does.
+- Airport duration p10 values are at least 1.05 minutes; the median across
+  airport-group p50 values is about 30.1 minutes. The weather and airport
+  aggregates are weighted by observed counts, and tip-percentage averages use
+  credit-card trips with a calculable percentage.
+- `.venv/bin/ruff check .`, `.venv/bin/ruff format --check .`,
+  `.venv/bin/python -m pytest -q` (**16 passed**), `docker compose config
+  --quiet`, and `git diff --check`: passed.
+
+### Deviations
+
+- Airport statistics exclude clean trips shorter than the configurable
+  one-minute minimum. The initial marts had implausible zero-minute airport
+  medians due to clean but non-travel-like TLC rows; the threshold is documented
+  on the model, configured in `dbt_project.yml`, and covered by a singular
+  test.
+- Rain-vs-dry headline comparisons use observed-day and valid credit-card-tip
+  weights instead of giving each weather category equal weight. This avoids
+  category frequency and null tip ratios distorting the data-derived headline.

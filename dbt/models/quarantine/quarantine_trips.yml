@@ -25,6 +25,8 @@ models:
         description: Source TLC month, retained for reconciliation.
         data_tests:
           - not_null
+      - name: source_month
+        description: Year and month extracted from the source TLC filename.
       - name: pickup_datetime
         description: Original naive local pickup timestamp.
       - name: dropoff_datetime

@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     duckdb_threads: int = Field(default=4, ge=1)
     work_dir: Path = Path("warehouse")
     dbt_project_dir: Path = Path("dbt")
+    app_data_dir: Path = Path("app/data")
+    export_size_budget_mb: int = Field(default=50, ge=1)
 
     @property
     def download_dir(self) -> Path:

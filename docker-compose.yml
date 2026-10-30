@@ -88,10 +88,13 @@ services:
       YCC_DUCKDB_MEMORY_LIMIT: ${YCC_DUCKDB_MEMORY_LIMIT:-6GB}
       YCC_DUCKDB_THREADS: ${YCC_DUCKDB_THREADS:-4}
       YCC_DBT_PROJECT_DIR: /opt/airflow/dbt
+      YCC_APP_DATA_DIR: /opt/airflow/app/data
+      YCC_EXPORT_SIZE_BUDGET_MB: ${YCC_EXPORT_SIZE_BUDGET_MB:-50}
       YCC_WORK_DIR: /data/work
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./dbt:/opt/airflow/dbt
+      - ./app:/opt/airflow/app
       - airflow_logs:/opt/airflow/logs
       - airflow_secrets:/run/airflow-secrets:ro
       - ycc_data:/data
@@ -115,6 +118,7 @@ services:
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./dbt:/opt/airflow/dbt
+      - ./app:/opt/airflow/app
       - airflow_logs:/opt/airflow/logs
       - airflow_secrets:/run/airflow-secrets:ro
       - ycc_data:/data
@@ -137,6 +141,7 @@ services:
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./dbt:/opt/airflow/dbt
+      - ./app:/opt/airflow/app
       - airflow_logs:/opt/airflow/logs
       - airflow_secrets:/run/airflow-secrets:ro
       - ycc_data:/data
@@ -159,6 +164,7 @@ services:
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./dbt:/opt/airflow/dbt
+      - ./app:/opt/airflow/app
       - airflow_logs:/opt/airflow/logs
       - airflow_secrets:/run/airflow-secrets:ro
       - ycc_data:/data

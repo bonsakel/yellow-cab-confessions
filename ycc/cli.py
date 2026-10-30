@@ -5,6 +5,7 @@ import logging
 import typer
 
 from ycc.config import Settings
+from ycc.export.marts_to_parquet import export_marts
 from ycc.extract.holidays import generate_holiday_seed
 from ycc.extract.tlc import extract_tlc_month
 from ycc.extract.weather import extract_weather_year
@@ -143,6 +144,21 @@ def load_zone_shapes() -> None:
     configure_logging()
     row_count = load_zone_centroids(Settings())
     logger.info("cli.load_zone_shapes.completed", extra={"row_count": row_count})
+
+
+@app.command("export")
+def export() -> None:
+    """Export dbt marts for the Streamlit app within the configured size budget."""
+    configure_logging()
+    result = export_marts(Settings())
+    logger.info(
+        "cli.export.completed",
+        extra={
+            "file_count": len(result.files),
+            "total_bytes": result.total_bytes,
+            "files": result.files,
+        },
+    )
 
 
 def main() -> None:

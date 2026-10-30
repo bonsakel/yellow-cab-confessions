@@ -3,6 +3,7 @@
 select
     trip_id,
     source_file,
+    source_month,
     pickup_datetime,
     dropoff_datetime,
     pickup_location_id,
