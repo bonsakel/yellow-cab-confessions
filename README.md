@@ -6,7 +6,11 @@
 
 **[▶ Try it live](#try-it-live)** · [How to use the app](#how-to-use-the-app) · [What it found](#cool-things-it-found) · [Run it yourself](#run-it-yourself)
 
-![Home page](docs/images/phase6-home.png)
+![Home page](docs/images/home.png)
+
+### 🎬 Watch the 45-second demo
+
+![Demo of the app](docs/images/demo.gif)
 
 ---
 
@@ -50,7 +54,7 @@ The front door. You get the big numbers, the headline "confessions", and a card 
 *Does bad weather change how people ride?*
 Pick a borough and a range of hours. The charts compare **dry, rainy and snowy** weather: how many rides there are, how much they cost, how well people tip, and how fast the cabs go.
 
-![Rain Tax](docs/images/phase6-rain-tax.png)
+![Rain Tax](docs/images/rain-tax.png)
 
 ### ✈️ 2. Airport Run Planner
 *When should I leave for the airport?*
@@ -62,13 +66,13 @@ Choose **JFK, LaGuardia or Newark**, whether you're going **to or from** it, the
 
 *This is based on past trips. It is not live traffic and not a price quote.*
 
-![Airport Run Planner](docs/images/phase6-airport-planner.png)
+![Airport Run Planner](docs/images/airport-planner.png)
 
 ### 🗺️ 3. Zone vs Zone
 *How does one neighbourhood compare with another?*
 Pick any two zones and see them side by side: rides, fares, speed and tipping habits, plus a map of the busiest routes. Not sure what to pick? Hit **Surprise me**.
 
-![Zone vs Zone](docs/images/phase6-zone-vs-zone.png)
+![Zone vs Zone](docs/images/zone-vs-zone.png)
 
 ### 🤡 4. The Blooper Reel
 *The most entertaining page.*
@@ -76,18 +80,18 @@ Shows how 41 million raw rides became 39.9 million clean ones, which kinds of er
 
 A **"nothing went missing" check** sits on the page: *original rides = clean rides + set-aside rides*. Every single ride is accounted for.
 
-![Blooper Reel](docs/images/phase6-blooper-reel.png)
+![Blooper Reel](docs/images/blooper-reel.png)
 
 ### 🌃 5. A Night in the City
 *Watch the city move.*
 Choose a famous night (New Year's Eve, July 4th, Halloween, or the rainiest night of the year) and press **play**. Glowing arcs show rides crossing the city in 10-minute steps, with a live count of rides in progress.
 
-![A Night in the City](docs/images/phase6-night-city.png)
+![A Night in the City](docs/images/night-city.png)
 
 ### 🔧 About / Under the Hood
 For the curious: how it was built, how the data flows, and the history of every run.
 
-![About](docs/images/phase6-about.png)
+![About](docs/images/about.png)
 
 ---
 
