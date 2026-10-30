@@ -1,0 +1,28 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.DS_Store
+
+# Local pipeline state and generated data
+warehouse/
+raw/
+logs/
+*.duckdb
+*.duckdb.wal
+app/data/*
+!app/data/.gitkeep
+dbt/target/
+dbt/logs/
+dbt_packages/
+airflow/logs/
+
+# Local virtual machines and package-manager artifacts
+.colima/
