@@ -26,11 +26,16 @@ RUN python -m venv /home/airflow/dbt-venv \
         "dbt-duckdb==${DBT_DUCKDB_VERSION}" \
         "duckdb==${DUCKDB_VERSION}" \
     && /home/airflow/dbt-venv/bin/pip check
-ENV PATH="/home/airflow/dbt-venv/bin:${PATH}"
+
+USER root
+RUN ln -s /home/airflow/dbt-venv/bin/dbt /usr/local/bin/dbt
+USER airflow
 
 COPY --chown=airflow:root pyproject.toml LICENSE ./
 COPY --chown=airflow:root ycc ./ycc
-RUN /usr/local/bin/python -m pip install --no-cache-dir --no-deps .
+RUN /usr/local/bin/python -m pip install --no-cache-dir \
+    --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt" \
+    .
 
 WORKDIR /opt/airflow
 ENTRYPOINT ["/usr/bin/dumb-init", "--", "/usr/local/bin/ycc-airflow-entrypoint"]

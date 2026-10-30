@@ -2,7 +2,8 @@
 
 setup:
 	test -f .env || cp .env.example .env
-	python3 -m pip install -e ".[dev]"
+	test -x .venv/bin/python || python3 -m venv .venv
+	.venv/bin/python -m pip install -e ".[dev]"
 
 demo:
 	docker compose up --build
@@ -14,11 +15,11 @@ full:
 	@echo "Full-year processing is added in a later build phase."
 
 test:
-	python3 -m pytest
+	.venv/bin/python -m pytest
 
 lint:
-	ruff check .
-	ruff format --check .
+	.venv/bin/ruff check .
+	.venv/bin/ruff format --check .
 
 clean:
 	rm -rf .pytest_cache .ruff_cache .coverage

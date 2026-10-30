@@ -53,6 +53,18 @@ services:
       - airflow_secrets:/run/airflow-secrets
     restart: "no"
 
+  ycc-data-init:
+    image: alpine:3.22
+    command:
+      - sh
+      - -ec
+      - |
+        mkdir -p /data/warehouse /data/work/downloads
+        chown ${AIRFLOW_UID:-50000}:0 /data /data/warehouse /data/work /data/work/downloads
+    volumes:
+      - ycc_data:/data
+    restart: "no"
+
   airflow-init:
     build:
       context: .
@@ -75,14 +87,18 @@ services:
       YCC_DUCKDB_PATH: ${YCC_DUCKDB_PATH:-/data/warehouse/ycc.duckdb}
       YCC_DUCKDB_MEMORY_LIMIT: ${YCC_DUCKDB_MEMORY_LIMIT:-6GB}
       YCC_DUCKDB_THREADS: ${YCC_DUCKDB_THREADS:-4}
+      YCC_WORK_DIR: /data/work
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - airflow_logs:/opt/airflow/logs
       - airflow_secrets:/run/airflow-secrets:ro
+      - ycc_data:/data
     depends_on:
       postgres:
         condition: service_healthy
       airflow-secrets-init:
+        condition: service_completed_successfully
+      ycc-data-init:
         condition: service_completed_successfully
     restart: "no"
 
@@ -98,6 +114,7 @@ services:
       - ./airflow/dags:/opt/airflow/dags
       - airflow_logs:/opt/airflow/logs
       - airflow_secrets:/run/airflow-secrets:ro
+      - ycc_data:/data
     depends_on:
       airflow-init:
         condition: service_completed_successfully
@@ -118,6 +135,7 @@ services:
       - ./airflow/dags:/opt/airflow/dags
       - airflow_logs:/opt/airflow/logs
       - airflow_secrets:/run/airflow-secrets:ro
+      - ycc_data:/data
     depends_on:
       airflow-init:
         condition: service_completed_successfully
@@ -138,6 +156,7 @@ services:
       - ./airflow/dags:/opt/airflow/dags
       - airflow_logs:/opt/airflow/logs
       - airflow_secrets:/run/airflow-secrets:ro
+      - ycc_data:/data
     depends_on:
       airflow-init:
         condition: service_completed_successfully
@@ -162,3 +181,4 @@ volumes:
   postgres_data:
   airflow_logs:
   airflow_secrets:
+  ycc_data:
