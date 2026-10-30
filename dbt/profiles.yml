@@ -1,0 +1,10 @@
+yellow_cab_confessions:
+  target: duckdb
+  outputs:
+    duckdb:
+      type: duckdb
+      path: "{{ env_var('YCC_DUCKDB_PATH', '/data/warehouse/ycc.duckdb') }}"
+      schema: analytics
+      threads: "{{ env_var('YCC_DUCKDB_THREADS', '4') | int }}"
+      extensions:
+        - parquet

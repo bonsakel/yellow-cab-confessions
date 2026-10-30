@@ -1,0 +1,23 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    description: Raw TLC trip records and pipeline ingestion metadata.
+    tables:
+      - name: yellow_trips_raw
+        description: One raw TLC yellow taxi row with its original source filename.
+        columns:
+          - name: source_file
+            description: Original monthly TLC parquet filename used for this row.
+      - name: taxi_zone_lookup
+        description: TLC taxi zone IDs with the published borough, zone and service-zone labels.
+        columns:
+          - name: location_id
+            description: TLC taxi zone identifier.
+          - name: borough
+            description: TLC borough label for the zone.
+          - name: zone
+            description: TLC published zone name.
+          - name: service_zone
+            description: TLC published service-zone category.

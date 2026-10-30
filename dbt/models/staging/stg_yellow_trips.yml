@@ -1,0 +1,104 @@
+version: 2
+
+models:
+  - name: stg_yellow_trips
+    description: >
+      TLC yellow taxi trips standardized to typed, snake_case fields. Computes
+      local-time trip metrics, deterministic trip IDs, duplicate ranks, and
+      an array of all applicable quarantine reason codes.
+    columns:
+      - name: trip_id
+        description: Stable hash of trip values and duplicate occurrence rank.
+        data_tests:
+          - unique
+          - not_null
+      - name: source_file
+        description: Source TLC monthly parquet filename.
+        data_tests:
+          - not_null
+      - name: vendor_id
+        description: TLC vendor identifier.
+      - name: pickup_datetime
+        description: Pickup timestamp in naive local NYC time as published by TLC.
+      - name: dropoff_datetime
+        description: Drop-off timestamp in naive local NYC time as published by TLC.
+      - name: passenger_count
+        description: Reported passenger count.
+      - name: trip_distance
+        description: Reported trip distance in miles.
+      - name: rate_code_id
+        description: TLC rate-code identifier.
+      - name: store_and_fwd_flag
+        description: TLC store-and-forward indicator.
+      - name: pickup_location_id
+        description: TLC pickup-zone identifier.
+      - name: dropoff_location_id
+        description: TLC drop-off-zone identifier.
+      - name: payment_type
+        description: TLC payment-type code.
+      - name: fare_amount
+        description: Metered fare in US dollars.
+      - name: extra
+        description: Miscellaneous extra charges in US dollars.
+      - name: mta_tax
+        description: MTA tax in US dollars.
+      - name: tip_amount
+        description: Reported tip in US dollars; cash tips are not recorded.
+      - name: tolls_amount
+        description: Reported tolls in US dollars.
+      - name: improvement_surcharge
+        description: TLC improvement surcharge in US dollars.
+      - name: total_amount
+        description: Total charge in US dollars.
+      - name: congestion_surcharge
+        description: Congestion surcharge in US dollars.
+      - name: airport_fee
+        description: TLC airport fee in US dollars.
+      - name: cbd_congestion_fee
+        description: Central Business District congestion fee in US dollars.
+      - name: source_month
+        description: YYYY-MM extracted from the source filename.
+      - name: source_month_start
+        description: First local timestamp of the source file month.
+      - name: trip_duration_seconds
+        description: Elapsed pickup-to-dropoff duration in seconds.
+      - name: trip_duration_min
+        description: Elapsed trip duration in minutes.
+      - name: avg_speed_mph
+        description: Trip distance divided by elapsed hours; null for zero-duration trips.
+      - name: pickup_local_hour
+        description: Pickup timestamp truncated to the naive local NYC hour.
+      - name: trip_date
+        description: Local NYC pickup date.
+      - name: trip_fingerprint
+        description: Hash of normalized business fields used for duplicate detection.
+      - name: duplicate_rank
+        description: Occurrence number among trips with the same fingerprint.
+      - name: is_unknown_zone
+        description: True when either endpoint uses TLC's special unknown-zone IDs 264 or 265.
+      - name: reject_reasons
+        description: Array containing every quarantine rule code that the trip violates.
+        data_tests:
+          - not_null
+  - name: stg_taxi_zones
+    description: >
+      TLC zone lookup labels, with null centroids pending the zone-shape
+      enrichment phase and a sentinel row for missing zone IDs.
+    columns:
+      - name: zone_id
+        description: TLC zone identifier, including -1 for a missing ID.
+        data_tests:
+          - unique
+          - not_null
+      - name: borough
+        description: TLC borough label.
+      - name: zone_name
+        description: TLC published zone name.
+      - name: service_zone
+        description: TLC published service zone label.
+      - name: centroid_lat
+        description: WGS84 zone centroid latitude, populated with zone shapes.
+      - name: centroid_lon
+        description: WGS84 zone centroid longitude, populated with zone shapes.
+      - name: is_unknown_zone
+        description: True for TLC IDs 264 and 265, plus the missing-zone sentinel.

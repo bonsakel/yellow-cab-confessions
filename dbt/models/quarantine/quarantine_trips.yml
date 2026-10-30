@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: quarantine_trips
+    description: >
+      One row per rejected raw trip, preserving every applicable quality-rule
+      code instead of silently discarding the record. Rules: NEGATIVE_FARE
+      (fare below zero or total at/below zero); DROPOFF_BEFORE_PICKUP (missing
+      timestamps or drop-off before pickup); ZERO_DURATION (under the configured
+      seconds with distance above the configured threshold); ABSURD_DURATION
+      (above the configured minutes); ZERO_DISTANCE_PAID (nonpositive distance
+      with fare above its configured threshold); ABSURD_DISTANCE (above the
+      configured miles); TELEPORTING_CAB (average speed above the configured
+      mph); OUT_OF_RANGE_DATE (pickup outside the source file month);
+      BAD_PASSENGER_COUNT (above the configured maximum); UNKNOWN_ZONE (endpoint
+      missing from the lookup, except TLC IDs 264 and 265); DUPLICATE_TRIP
+      (exact duplicate after its first occurrence).
+    columns:
+      - name: trip_id
+        description: Stable ID of the rejected raw trip.
+        data_tests:
+          - unique
+          - not_null
+      - name: source_file
+        description: Source TLC month, retained for reconciliation.
+        data_tests:
+          - not_null
+      - name: pickup_datetime
+        description: Original naive local pickup timestamp.
+      - name: dropoff_datetime
+        description: Original naive local drop-off timestamp.
+      - name: pickup_location_id
+        description: TLC pickup-zone identifier from the rejected trip.
+      - name: dropoff_location_id
+        description: TLC drop-off-zone identifier from the rejected trip.
+      - name: fare_amount
+        description: Reported fare amount in US dollars.
+      - name: total_amount
+        description: Reported total charge in US dollars.
+      - name: trip_distance
+        description: Reported distance in miles.
+      - name: trip_duration_min
+        description: Computed pickup-to-dropoff duration in minutes.
+      - name: avg_speed_mph
+        description: Computed average speed in miles per hour.
+      - name: reject_reasons
+        description: All applicable quarantine reasons for this trip.
+        data_tests:
+          - not_null
+      - name: rejection_count
+        description: Number of applicable rule codes for this trip.
+      - name: is_unknown_zone
+        description: True when either endpoint uses TLC ID 264 or 265.

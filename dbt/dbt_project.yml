@@ -1,0 +1,40 @@
+name: yellow_cab_confessions
+version: "1.0.0"
+config-version: 2
+profile: yellow_cab_confessions
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+analysis-paths: ["analyses"]
+snapshot-paths: ["snapshots"]
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+vars:
+  ycc_year: 2024
+  zero_distance_fare_threshold: 10.0
+  zero_duration_seconds: 30
+  zero_duration_distance_threshold: 0.5
+  absurd_duration_minutes: 360
+  absurd_distance_miles: 100.0
+  teleporting_speed_mph: 80.0
+  max_passenger_count: 8
+  unknown_zone_ids: [264, 265]
+
+models:
+  yellow_cab_confessions:
+    +persist_docs:
+      relation: true
+      columns: true
+    staging:
+      +schema: staging
+      +materialized: view
+    quarantine:
+      +schema: quarantine
+      +materialized: table
+    core:
+      +schema: core
+      +materialized: table

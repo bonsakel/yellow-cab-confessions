@@ -6,9 +6,11 @@ import typer
 
 from ycc.config import Settings
 from ycc.extract.tlc import extract_tlc_month
+from ycc.extract.zones import download_zone_lookup
 from ycc.load.duckdb_loader import load_tlc_month
 from ycc.load.manifest import IngestionManifest
 from ycc.load.s3 import S3ObjectStore
+from ycc.load.zones import load_zone_lookup
 from ycc.logging import configure_logging
 
 logger = logging.getLogger(__name__)
@@ -66,6 +68,25 @@ def load(
             "cli.load.month",
             extra={"month": month, "row_count": row_count},
         )
+
+
+@app.command("extract-zones")
+def extract_zones() -> None:
+    """Download and cache the public TLC taxi zone lookup CSV."""
+    configure_logging()
+    path = download_zone_lookup(Settings())
+    logger.info(
+        "cli.extract_zones.completed",
+        extra={"path": str(path), "bytes": path.stat().st_size},
+    )
+
+
+@app.command("load-zones")
+def load_zones() -> None:
+    """Load the cached TLC taxi zone lookup into raw.taxi_zone_lookup."""
+    configure_logging()
+    row_count = load_zone_lookup(Settings())
+    logger.info("cli.load_zones.completed", extra={"row_count": row_count})
 
 
 def main() -> None:

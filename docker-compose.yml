@@ -90,6 +90,7 @@ services:
       YCC_WORK_DIR: /data/work
     volumes:
       - ./airflow/dags:/opt/airflow/dags
+      - ./dbt:/opt/airflow/dbt
       - airflow_logs:/opt/airflow/logs
       - airflow_secrets:/run/airflow-secrets:ro
       - ycc_data:/data
@@ -112,6 +113,7 @@ services:
       - "8080:8080"
     volumes:
       - ./airflow/dags:/opt/airflow/dags
+      - ./dbt:/opt/airflow/dbt
       - airflow_logs:/opt/airflow/logs
       - airflow_secrets:/run/airflow-secrets:ro
       - ycc_data:/data
@@ -133,6 +135,7 @@ services:
     environment: *airflow-environment
     volumes:
       - ./airflow/dags:/opt/airflow/dags
+      - ./dbt:/opt/airflow/dbt
       - airflow_logs:/opt/airflow/logs
       - airflow_secrets:/run/airflow-secrets:ro
       - ycc_data:/data
@@ -154,6 +157,7 @@ services:
     environment: *airflow-environment
     volumes:
       - ./airflow/dags:/opt/airflow/dags
+      - ./dbt:/opt/airflow/dbt
       - airflow_logs:/opt/airflow/logs
       - airflow_secrets:/run/airflow-secrets:ro
       - ycc_data:/data

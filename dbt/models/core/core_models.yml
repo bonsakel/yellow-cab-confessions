@@ -1,0 +1,184 @@
+version: 2
+
+models:
+  - name: dim_zone
+    description: TLC taxi zone dimension with a sentinel row for missing endpoint IDs.
+    columns:
+      - name: zone_id
+        description: TLC zone ID; -1 represents a missing identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: borough
+        description: Borough name from the TLC zone lookup.
+      - name: zone_name
+        description: Zone name from the TLC zone lookup.
+      - name: service_zone
+        description: TLC service-zone classification.
+      - name: centroid_lat
+        description: WGS84 latitude; populated during zone-shape enrichment.
+      - name: centroid_lon
+        description: WGS84 longitude; populated during zone-shape enrichment.
+      - name: is_unknown_zone
+        description: True for zone IDs 264, 265, and the missing-ID sentinel.
+  - name: dim_date
+    description: One row per date in the configured analysis year.
+    columns:
+      - name: date_key
+        description: Integer YYYYMMDD date key.
+        data_tests:
+          - unique
+          - not_null
+      - name: date_day
+        description: Calendar date.
+        data_tests:
+          - unique
+          - not_null
+      - name: day_name
+        description: Full weekday name.
+      - name: day_of_week
+        description: Weekday number, with Sunday zero.
+      - name: week_of_year
+        description: ISO-style week number supplied by DuckDB.
+      - name: month_number
+        description: Calendar month number.
+      - name: month_name
+        description: Full month name.
+      - name: quarter_number
+        description: Calendar quarter.
+      - name: year_number
+        description: Calendar year.
+      - name: is_weekend
+        description: True for Saturday and Sunday.
+      - name: holiday_name
+        description: Holiday label, populated during holiday enrichment.
+  - name: dim_weather
+    description: >
+      One row per naive local NYC hour in the configured year. Weather measures
+      remain null and bucket unknown until the enrichment phase loads Open-Meteo.
+    columns:
+      - name: local_hour
+        description: Unique naive NYC local-hour key; DST fall-back is represented once per wall-clock hour.
+        data_tests:
+          - unique
+          - not_null
+      - name: temperature_2m
+        description: Hourly air temperature in Celsius.
+      - name: precipitation
+        description: Total hourly precipitation in millimeters.
+      - name: rain
+        description: Hourly rain in millimeters.
+      - name: snowfall
+        description: Hourly snowfall in centimeters.
+      - name: wind_speed_10m
+        description: Hourly wind speed in kilometers per hour.
+      - name: weather_code
+        description: Open-Meteo weather interpretation code.
+      - name: weather_bucket
+        description: Weather category; unknown until weather enrichment is loaded.
+  - name: dim_payment
+    description: Payment-type and TLC rate-code labels observed in raw trips.
+    columns:
+      - name: payment_key
+        description: Stable surrogate key for a payment-type and rate-code pair.
+        data_tests:
+          - unique
+          - not_null
+      - name: payment_type
+        description: Numeric TLC payment-type code.
+      - name: payment_type_label
+        description: Readable TLC payment-type label.
+      - name: rate_code_id
+        description: Numeric TLC rate-code ID.
+      - name: rate_code_label
+        description: Readable TLC rate-code label.
+  - name: fct_trips
+    description: One row per clean TLC trip, with dimension keys and trip measures.
+    columns:
+      - name: trip_id
+        description: Deterministic surrogate key of a clean trip.
+        data_tests:
+          - unique
+          - not_null
+      - name: date_key
+        description: Foreign key to the local pickup date.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: weather_hour
+        description: Foreign key to the naive local pickup hour in dim_weather.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_weather')
+                field: local_hour
+      - name: pickup_zone_id
+        description: Foreign key to the TLC pickup zone.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_zone')
+                field: zone_id
+      - name: dropoff_zone_id
+        description: Foreign key to the TLC drop-off zone.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_zone')
+                field: zone_id
+      - name: payment_key
+        description: Foreign key to the payment and rate-code dimension.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_payment')
+                field: payment_key
+      - name: source_file
+        description: Source TLC parquet filename, retained for reconciliation.
+      - name: vendor_id
+        description: TLC vendor identifier.
+      - name: payment_type
+        description: TLC payment-type code.
+      - name: rate_code_id
+        description: TLC rate-code ID.
+      - name: pickup_datetime
+        description: Naive local NYC pickup timestamp.
+      - name: dropoff_datetime
+        description: Naive local NYC drop-off timestamp.
+      - name: pickup_local_hour
+        description: Pickup timestamp truncated to local NYC hour.
+      - name: trip_distance
+        description: Reported trip distance in miles.
+      - name: trip_duration_min
+        description: Elapsed trip duration in minutes.
+      - name: avg_speed_mph
+        description: Average distance per hour of trip duration in miles per hour.
+      - name: passenger_count
+        description: Reported passenger count.
+      - name: fare_amount
+        description: Metered fare in US dollars.
+      - name: tip_amount
+        description: Reported tip amount in US dollars; cash tips are not reported by TLC.
+      - name: tolls_amount
+        description: Reported toll amount in US dollars.
+      - name: total_amount
+        description: Reported total charge in US dollars.
+      - name: congestion_surcharge
+        description: Congestion surcharge in US dollars.
+      - name: airport_fee
+        description: Airport fee in US dollars.
+      - name: cbd_congestion_fee
+        description: Central Business District congestion fee in US dollars.
+      - name: tip_pct
+        description: Tip as a percentage of fare, calculated only for payment type 1 (credit card).
+      - name: is_airport_trip
+        description: True when either endpoint is JFK, LaGuardia, or Newark.
+      - name: is_unknown_zone
+        description: True when either endpoint is TLC unknown zone ID 264 or 265.

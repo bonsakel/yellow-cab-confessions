@@ -56,7 +56,7 @@
 
 ## Phase 2: Extract and load
 
-**Status:** Complete. Acceptance checks passed; Phase 3 has not started.
+**Status:** Complete. Acceptance checks passed before Phase 3 began.
 
 ### Delivered
 
@@ -107,3 +107,60 @@
 - Pylance's workspace diagnostic reports only the Airflow import in the DAG
   as unresolved under the local `.venv`; Airflow is installed and the DAG
   runtime is verified inside the Airflow image.
+
+## Phase 3: dbt staging, quarantine, and star schema
+
+**Status:** Complete. The demo-month dbt build and reconciliation acceptance
+checks passed before Phase 4 began.
+
+### Delivered
+
+- Added the dbt DuckDB project and profile, a schema-naming macro, raw source
+  declarations, and configured quality thresholds in `dbt_project.yml`.
+- Added typed TLC staging with local-time metrics, deterministic trip IDs,
+  exact-duplicate ranks, and every applicable reject reason.
+- Added lookup-backed zone validation. TLC IDs 264 and 265 remain clean but are
+  flagged as unknown; other IDs absent from the loaded lookup are quarantined.
+- Added the quarantine table, date/zone/weather/payment dimensions, clean trip
+  fact table, dimension relationships, range checks, and per-source-file raw
+  reconciliation test.
+- Added and loaded the 265-row TLC taxi zone lookup. Its extraction/load CLI is
+  narrowly scoped to supplying the zone dimension and validating zone IDs.
+- Documented model and column meanings, including the quarantine rule
+  conditions and naive local-hour uniqueness choice.
+- Added a focused zone-loader unit test.
+
+### Verification
+
+- Airflow/MinIO/Postgres Compose services remained healthy; the dbt adapter
+  successfully connected to the shared DuckDB warehouse.
+- `dbt build --no-partial-parse`: **42/42 passed** (8 models and 34 data tests,
+  with no warnings, errors, or skips).
+- January 2024 raw rows: **2,964,624**; clean fact rows: **2,884,524**;
+  quarantined trips: **80,100**. The reconciliation test passed exactly.
+- The quarantine contains examples for **9 of 11** rules. Counts include
+  37,984 `NEGATIVE_FARE`, 39,138 `ZERO_DISTANCE_PAID`, 1,772
+  `ABSURD_DURATION`, and 18 `OUT_OF_RANGE_DATE` rows. No exact duplicate or
+  non-lookup zone IDs occurred in this source month; the data does include
+  **28,770** clean trips flagged with TLC unknown-zone IDs.
+- The 2024 date dimension has **366** dates; the local-hour weather dimension
+  has **8,784** unique rows, including one row per naive wall-clock hour.
+  No non-credit-card fact row has a tip percentage.
+- `.venv/bin/ruff check .`, `.venv/bin/ruff format --check .`, and
+  `.venv/bin/python -m pytest -q`: passed; **10 tests**.
+- `git diff --check`: passed.
+
+### Deviations and deferred work
+
+- Phase 2 had not loaded the zone lookup, so a small TLC lookup extractor and
+  loader were added here to implement lookup-backed validation and a useful
+  `dim_zone`.
+- The weather dimension is currently a complete local-hour scaffold with
+  unknown weather values; weather and holiday staging/enrichment, zone-shape
+  centroids, and holiday labels remain for Phase 4. The fallback DST hour is
+  represented once at naive local-hour grain, as required for uniqueness.
+- The January source month has no examples for `DUPLICATE_TRIP` or
+  `UNKNOWN_ZONE`; those checks are present but those two rules cannot be
+  demonstrated by this input. No fixture rows were added because Phase 3 is
+  being validated against the loaded demo month; CI fixtures are specified in
+  a later phase.
